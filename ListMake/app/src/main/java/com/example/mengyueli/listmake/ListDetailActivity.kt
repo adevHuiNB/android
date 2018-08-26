@@ -48,12 +48,13 @@ class ListDetailActivity : AppCompatActivity() {
     }
 
     override fun onBackPressed() {
-        super.onBackPressed()
         val bundle = Bundle()
         bundle.putParcelable(ListActivity.INTENT_LIST_KEY, list)
         val intent = Intent()
         intent.putExtras(bundle)
         setResult(Activity.RESULT_OK, intent)
+        super.onBackPressed()
+
     }
 
     private fun showCreateTaskDialog() {
