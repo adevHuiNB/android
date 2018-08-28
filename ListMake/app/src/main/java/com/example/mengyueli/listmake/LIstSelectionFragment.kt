@@ -34,8 +34,12 @@ class ListSelectionFragment : Fragment(), ListSelectionRecyclerViewAdapter.ListS
     }
     private fun updateLists() {
         val lists = listDataManager.readLists()
-        listsRecyclerView.adapter = ListSelectionRecyclerViewAdapter(lists,
-                this) }
+        //////////////////////////////////////////////////////////////////////////
+        listsRecyclerView.adapter = ListSelectionRecyclerViewAdapter(lists, this)
+
+
+    }
+    ////////////////////////////////////////////
 
 
 

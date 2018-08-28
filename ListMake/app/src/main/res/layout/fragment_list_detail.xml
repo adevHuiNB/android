@@ -3,7 +3,15 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".LIstSelectionFragment">
+    tools:context=".ListDetailFragment">
+
+    <android.support.v7.widget.RecyclerView
+        android:id="@+id/list_items_recyclerview"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+       >
+
+    </android.support.v7.widget.RecyclerView>
 
     <!-- TODO: Update blank fragment layout -->
     <TextView
