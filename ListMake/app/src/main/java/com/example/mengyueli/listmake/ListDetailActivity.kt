@@ -13,9 +13,9 @@ import android.widget.EditText
 
 class ListDetailActivity : AppCompatActivity() {
 
-    lateinit var listItemsRecyclerView : RecyclerView
-
     lateinit var list: TaskList
+    lateinit var listItemsRecyclerView: RecyclerView
+
 
     lateinit var addTaskButton: FloatingActionButton
 
@@ -24,6 +24,19 @@ class ListDetailActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_list_detail)
 
+        list = intent.getParcelableExtra(ListActivity.INTENT_LIST_KEY)
+// 2
+        title = list.name
+
+
+        listItemsRecyclerView =
+                findViewById<RecyclerView>(R.id.list_items_recyclerview)
+// 2
+        listItemsRecyclerView.adapter = ListItemsRecyclerViewAdapter(list)
+// 3
+        listItemsRecyclerView.layoutManager = LinearLayoutManager(this)
+
+
 
 
         addTaskButton = findViewById<FloatingActionButton>(R.id.add_task_button)
@@ -31,17 +44,10 @@ class ListDetailActivity : AppCompatActivity() {
             showCreateTaskDialog()
         }
 
-        list = intent.getParcelableExtra(ListActivity.INTENT_LIST_KEY)
-// 2
-        title = list.name
+
+
 
         // 1
-        listItemsRecyclerView =
-                findViewById<RecyclerView>(R.id.list_items_recyclerview)
-// 2
-        listItemsRecyclerView.adapter = ListItemsRecyclerViewAdapter(list)
-// 3
-        listItemsRecyclerView.layoutManager = LinearLayoutManager(this)
 
 
 

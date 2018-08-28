@@ -11,36 +11,43 @@ import android.text.InputType
 import android.view.Menu
 import android.view.MenuItem
 import android.widget.EditText
+import android.widget.FrameLayout
 
 import kotlinx.android.synthetic.main.activity_list.*
 
-class ListActivity : AppCompatActivity(), ListSelectionRecyclerViewAdapter.ListSelectionRecyclerViewClickListener {
+class ListActivity : AppCompatActivity(), ListSelectionFragment.OnListItemFragmentInteractionListener {
+
+    private var largeScreen = false
+    private var listFragment : ListDetailFragment? = null
+
+    private var fragmentContainer: FrameLayout? =null
+
+
+    private var listSelectionFragment: ListSelectionFragment = ListSelectionFragment.newInstance()
 
     companion object {
         val INTENT_LIST_KEY = "list"
         val LIST_DETAIL_REQUEST_CODE = 123
     }
 
-    lateinit var listsRecyclerView: RecyclerView
 
-    val listDataManager: ListDataManager = ListDataManager(this)
+
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_list)
         setSupportActionBar(toolbar)
 
+
+        listSelectionFragment =
+                supportFragmentManager.findFragmentById(R.id.list_selection_fragment) as
+                        ListSelectionFragment
+        fragmentContainer = findViewById<FrameLayout>(R.id.fragment_container)
+        largeScreen = fragmentContainer != null
         fab.setOnClickListener { view ->
             showCreateListDialog()
         }
-
-
-        // 1
-        val lists = listDataManager.readLists()
-        listsRecyclerView = findViewById<RecyclerView>(R.id.lists_recyclerview)
-        listsRecyclerView.layoutManager = LinearLayoutManager(this)
-        // 2
-        listsRecyclerView.adapter = ListSelectionRecyclerViewAdapter(lists, this)
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -71,11 +78,9 @@ class ListActivity : AppCompatActivity(), ListSelectionRecyclerViewAdapter.ListS
         builder.setView(listTitleEditText)
 // 3
         builder.setPositiveButton(positiveButtonTitle, { dialog, i ->
-            val list = TaskList(listTitleEditText.text.toString())
-            listDataManager.saveList(list)
-            val recyclerAdapter = listsRecyclerView.adapter as
-                    ListSelectionRecyclerViewAdapter
-            recyclerAdapter.addList(list)
+            var list = TaskList(listTitleEditText.text.toString())
+            listSelectionFragment.addList(list)
+
             dialog.dismiss()
             showListDetail(list)
         })
@@ -84,15 +89,44 @@ class ListActivity : AppCompatActivity(), ListSelectionRecyclerViewAdapter.ListS
     }
 
     private fun showListDetail(list: TaskList) {
-        // 1
-        val listDetailIntent = Intent(this, ListDetailActivity::class.java)
-        // 2
-        listDetailIntent.putExtra(INTENT_LIST_KEY, list)
-        // 3
-        startActivityForResult(listDetailIntent, LIST_DETAIL_REQUEST_CODE)
+
+        if (!largeScreen) {
+            val listDetailIntent = Intent(this, ListDetailActivity::class.java)
+            listDetailIntent.putExtra(INTENT_LIST_KEY, list)
+            startActivityForResult(listDetailIntent, LIST_DETAIL_REQUEST_CODE)
+        } else {
+            title = list.name
+
+            listFragment = ListDetailFragment.newInstance(list)
+
+            supportFragmentManager.beginTransaction()
+                    .replace(R.id.fragment_container, listFragment,
+                            getString(R.string.list_fragment_tag))
+                    .addToBackStack(null)
+                    .commit()
+
+            fab.setOnClickListener { view ->
+                showCreateTaskDialog()
+            }
+        }
     }
 
-    override fun listItemClicked(list: TaskList) {
+    private fun showCreateTaskDialog() {
+        val taskEditText = EditText(this)
+        taskEditText.inputType = InputType.TYPE_CLASS_TEXT
+        AlertDialog.Builder(this)
+                .setTitle(R.string.task_to_add)
+                .setView(taskEditText)
+                .setPositiveButton(R.string.add_task, { dialog, _ ->
+                    val task = taskEditText.text.toString()
+                    listFragment?.addTask(task)
+                    dialog.dismiss()
+                })
+                .create()
+                .show()
+    }
+
+    override fun onListItemClicked(list: TaskList) {
         showListDetail(list)
     }
 
@@ -103,16 +137,29 @@ class ListActivity : AppCompatActivity(), ListSelectionRecyclerViewAdapter.ListS
         if (requestCode == LIST_DETAIL_REQUEST_CODE) {
 // 2
             data?.let {
-                // 3
-                listDataManager.saveList(data.getParcelableExtra(INTENT_LIST_KEY))
-                updateLists()
+                listSelectionFragment.saveList(data.getParcelableExtra<TaskList>(INTENT_LIST_KEY))
+
             }
         }
     }
 
-    private fun updateLists() {
-        val lists = listDataManager.readLists()
-        listsRecyclerView.adapter =
-                ListSelectionRecyclerViewAdapter(lists, this)
+    override fun onBackPressed() {
+        super.onBackPressed()
+        title = resources.getString(R.string.app_name)
+// 1
+        listFragment?.list?.let {
+            listSelectionFragment?.listDataManager?.saveList(it)
+        }
+// 2
+        if (listFragment != null) {
+            supportFragmentManager
+                    .beginTransaction()
+                    .remove(listFragment)
+                    .commit()
+            listFragment = null
+        }
+        fab.setOnClickListener {view ->
+            showCreateListDialog()
+        }
     }
 }
